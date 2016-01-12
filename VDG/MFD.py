@@ -20,6 +20,9 @@ class MFD:
         self.height = 4
         self.width = 4
 
+        # Sets the scale value of the final output.  Values less that 1.0 will increase the final output size, while values greater than 1.0 decrease the size.
+        self.scale = 1.2
+
         # Sets the default font & font color for the MFD.  Change to your default standard, if needed.
         self.font = "H"
         self.fontColor = "yellow"
@@ -47,19 +50,24 @@ class MFD:
     def makeOSBLabel(self,num,label1,label2,backhl,twoln):
 
         try:
-            labelStart = "\"\\f" + self.font+ "\\m[" + self.fontColor + "]"
+            labelStart = "\"\\f" + self.font + "\\m[" + self.fontColor + "]\\s[" + str(int(11/self.scale)) + "]" #Uses 11pt font for the base display & scales using the self.scale variable
             labelEnd = "\\m[]\\f[]\"" + self.labelPos[str(num)] + ";\n"
-            label = labelStart + label1 + labelEnd
+            
+            # Apply 2-line OSB label check logic
+            if twoln == "y":
+                label = labelStart + label1 + labelEnd[0:9] + " " + labelStart + label2 + labelEnd  #TODO:  Handling of 2-line labels for OSB's 1-5 and 11-15 needs improvement due to pic auto split feature
+            else:
+                label = labelStart + label1 + labelEnd    
+
             return label
 
         except KeyError:
             raise UserWarning("Invalid OSB number: " + str(num) + " (OSB numbers must be between 1-20)")
 
 #TODO
-# 1) Create a label scaling function which scales label font according to the pic "scale" variable
+
 # 2) Create backhighlight function/feature
 # 3) Create SOI line between labels if display is SOI
-# 4) Display two-line labels properly
 # 5) Display 75% font two-line labels properly
 # 6) Find correct display font
 
@@ -69,10 +77,10 @@ f = open('MFD.ms','w')
 a = ""
 
 for b in range(1,21):
-    btn = display.makeOSB(b) + display.makeOSBLabel(b,"TEST","","y","n")
+    btn = display.makeOSB(b) + display.makeOSBLabel(b,"TE","ST","n","n")
     a = a + btn
 
-m = ".PS\n" + "scale = 1.2\n" + display.Screen + a + ".PE\n"
+m = ".PS\n" + "scale = " + str(display.scale) + "\n" + display.Screen + a + ".PE\n"
 f.write(m)
 f.close()
 
