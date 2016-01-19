@@ -50,35 +50,63 @@ class MFD:
     def makeOSBLabel(self,num,label1,label2,backhl,twoln):
 
         try:
+            
             labelStart = "\"\\f" + self.font + "\\m[" + self.fontColor + "]\\s[" + str(int(11/self.scale)) + "]" #Uses 11pt font for the base display & scales using the self.scale variable
             labelEnd = "\\m[]\\f[]\"" + self.labelPos[str(num)] + ";\n"
-            
-            # Apply 2-line OSB label check logic
-            if twoln == "y":
-                label = labelStart + label1 + labelEnd[0:9] + " " + labelStart + label2 + labelEnd  #TODO:  Handling of 2-line labels for OSB's 1-5 and 11-15 needs improvement due to pic auto split feature
+
+            #Apply OSB label backhighlight logic
+            if backhl == "y":
+
+                self.fontColor = "black"
+                labelBHL = "[box shaded \"yellow\" width 0.4 height 0.2;] " + self.labelPos[str(num)] + ";\n"
+                labelStart = "\"\\f" + self.font + "\\m[" + self.fontColor + "]\\s[" + str(int(11/self.scale)) + "]"
+                labelEnd = "\\m[]\\f[]\"" + self.labelPos[str(num)] + ";\n"
+
+                if twoln == "y":
+                    label = labelBHL + labelStart + label1 + labelEnd[0:9] + " " + labelStart + label2 + labelEnd
+                elif twoln == "n":
+                    label = labelBHL + labelStart + label1 + labelEnd
+                else:
+                    raise UserWarning("Invalid two-line option")
+
+            elif backhl == "n":
+
+                self.fontColor = "yellow"
+                if twoln == "y":
+                    label = labelStart + label1 + labelEnd[0:9] + " " + labelStart + label2 + labelEnd
+                elif twoln == "n":
+                    label = labelStart + label1 + labelEnd
+                else:
+                    raise UserWarning("Invalid two-line option")
             else:
-                label = labelStart + label1 + labelEnd    
+                raise UserWarning("Invalid backhighlight option")
 
             return label
-
+             
         except KeyError:
             raise UserWarning("Invalid OSB number: " + str(num) + " (OSB numbers must be between 1-20)")
 
 #TODO
 
-# 2) Create backhighlight function/feature
+# 2.1)  Size the backhighlight box based on the count of characters in the label
+# 2.2)  Orient the OSB 6-10 & 16-20 backhighlight boxes vertically
+
 # 3) Create SOI line between labels if display is SOI
 # 5) Display 75% font two-line labels properly
 # 6) Find correct display font
+# 7) Create the ability to import MFD definition files and generate displays
+# 8) Create CLI ability to identify MFD definition file to be processed
 
 #-----------
 display = MFD()
 f = open('MFD.ms','w')
 a = ""
+btn = display.makeOSB(6) + display.makeOSBLabel(6,"T","I","y","n")
+a = a + btn
 
-for b in range(1,21):
-    btn = display.makeOSB(b) + display.makeOSBLabel(b,"TE","ST","n","n")
-    a = a + btn
+#for b in range(2,21):
+#    btn = display.makeOSB(b) + display.makeOSBLabel(b,"TE","ST","n","n")
+#    a = a + btn
 
 m = ".PS\n" + "scale = " + str(display.scale) + "\n" + display.Screen + a + ".PE\n"
 f.write(m)
